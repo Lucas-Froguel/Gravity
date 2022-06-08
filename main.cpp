@@ -120,7 +120,7 @@ public:
 	int width, height, center_x, center_y;
 
 	// parameters
-	float e = 5;
+	float e = 2;
 	float dt = 1/60.;
 	float G = 6.67 * pow(10, 2);
 
@@ -187,11 +187,11 @@ public:
 			float dx = (p1.x - p2.x) / r;
 			float dy = (p1.y - p2.y) / r;
 
-			p1.x += dx * (r - min_dis) * e;
-			p1.y += dy * (r - min_dis) * e;
+			p1.x += dx * (min_dis - r) * e * (p2.mass) / (p1.mass + p2.mass);
+			p1.y += dy * (min_dis - r) * e * (p2.mass) / (p1.mass + p2.mass);
 
-			p2.x -= dx * (r - min_dis) * e;
-			p2.y -= dy * (r - min_dis) * e;
+			p2.x -= dx * (min_dis - r) * e * (p1.mass) / (p1.mass + p2.mass);
+			p2.y -= dy * (min_dis - r) * e * (p1.mass) / (p1.mass + p2.mass);
 		}
 	}
 
@@ -242,7 +242,7 @@ int main(){
         // clear the window with black color
         window.clear(sf::Color::Black);
 
-        // little log
+        // little log to help debug
         cout << endl << "LOG -- iteration " << k << endl;
         k++;
 
