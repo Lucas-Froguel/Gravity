@@ -6,6 +6,9 @@
 CPP_SRCS += \
 ../main.cpp 
 
+O_SRCS += \
+../main.o 
+
 CPP_DEPS += \
 ./main.d 
 

@@ -45,7 +45,8 @@ public:
 		shape.setOrigin(r, r);
 		x = x_old + vx * dt;
 		y = y_old + vy * dt;
-		cout << x <<  " and " << x_old << endl;
+		cout << "x: " << x <<  " and " << x_old << endl;
+		cout << "y: " << y <<  " and " << y_old << endl;
 	}
 
 	void setAnyPosition(float xa, float ya){
@@ -113,7 +114,7 @@ public:
 	// planets setup
 	int n_planets;
 	vector<Planet> planets;
-	float Fxs[2], Fys[2];
+	float Fxs[3], Fys[3];
 
 	// window setup
 	sf::RenderWindow& window;
@@ -129,7 +130,7 @@ public:
 		width = window.getSize().x, height = window.getSize().y;
 		center_x = width / 2, center_y = height / 2;
 
-		// plants configs
+		// planets configs
 		n_planets = n;
 		planets = planetss;
 	}
@@ -161,21 +162,25 @@ public:
 		for (int i = 0; i < n_planets; i++){
 			Planet& planet = planets[i];
 			float Fx = 0, Fy = 0;
-			for (int j = 0; j < n_planets; j++){
-				if (i != j){
-					Planet& p = planets[j];
-					float dx = planet.x - p.x;
-					float dy = planet.y - p.y;
-					float r = sqrt(pow(dx, 2) + pow(dy, 2));
-					Fx += - G * ((planet.mass * p.mass) / pow(r, 3)) * dx;
-					Fy += - G * ((planet.mass * p.mass) / pow(r, 3)) * dy;
-					// we put this here in order to be more efficient :D
-					// this checks wheter planets "planet" and "p" have collided or not
-					checkCollisionPlanets(planet, p, r);
+			if (planet.is_on_screen){
+				for (int j = 0; j < n_planets; j++){
+					if (i != j){
+						Planet& p = planets[j];
+						if (p.is_on_screen){
+							float dx = planet.x - p.x;
+							float dy = planet.y - p.y;
+							float r = sqrt(pow(dx, 2) + pow(dy, 2));
+							Fx += - G * ((planet.mass * p.mass) / pow(r, 3)) * dx;
+							Fy += - G * ((planet.mass * p.mass) / pow(r, 3)) * dy;
+							// we put this here in order to be more efficient :D
+							// this checks wheter planets "planet" and "p" have collided or not
+							checkCollisionPlanets(planet, p, r);
+						}
+					}
 				}
+				Fxs[i] = Fx;
+				Fys[i] = Fy;
 			}
-			Fxs[i] = Fx;
-			Fys[i] = Fy;
 		}
 	}
 
@@ -216,11 +221,16 @@ int main(){
     planet1.mass = 1000;
     Planet planet2(300., 0.);
     planet2.setColor(0, 255, 0);
+    planet2.vy = 50;
+    Planet planet3(-100, -200);
+    planet3.setColor(240, 0, 50);
+    planet3.vx = -20;
+    planet3.vy = 40;
 
-    vector<Planet> planets = {planet1, planet2};
+    vector<Planet> planets = {planet1, planet2, planet3};
 
     // setup the gravitational system
-    GravitationalSystem grav(2, window, planets);
+    GravitationalSystem grav(3, window, planets);
 
     cout << "run initial positions" << endl;
     grav.calculatePlanetsInitialPositions();
