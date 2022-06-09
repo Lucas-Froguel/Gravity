@@ -101,6 +101,7 @@ public:
 	void checkOnScreen(int center_x, int center_y){
 		if (center_x < x || x < -center_x || center_y < y || y < -center_y ){
 			is_on_screen = false;
+			mass = 0;
 			setRadius(0.);
 			setAnyPosition(0., 0.);
 		}
@@ -121,7 +122,7 @@ public:
 	int width, height, center_x, center_y;
 
 	// parameters
-	float e = 2;
+	float e = 1.1;
 	float dt = 1/60.;
 	float G = 6.67 * pow(10, 2);
 
@@ -192,15 +193,27 @@ public:
 			float dx = (p1.x - p2.x) / r;
 			float dy = (p1.y - p2.y) / r;
 
-			p1.x += dx * (min_dis - r) * e * (p2.mass) / (p1.mass + p2.mass);
-			p1.y += dy * (min_dis - r) * e * (p2.mass) / (p1.mass + p2.mass);
+			p1.x += dx * (min_dis - r) * e * (2*p2.mass) / (p1.mass + p2.mass);
+			p1.y += dy * (min_dis - r) * e * (2*p2.mass) / (p1.mass + p2.mass);
 
-			p2.x -= dx * (min_dis - r) * e * (p1.mass) / (p1.mass + p2.mass);
-			p2.y -= dy * (min_dis - r) * e * (p1.mass) / (p1.mass + p2.mass);
+			p2.x -= dx * (min_dis - r) * e * (2*p1.mass) / (p1.mass + p2.mass);
+			p2.y -= dy * (min_dis - r) * e * (2*p1.mass) / (p1.mass + p2.mass);
 		}
 	}
 
 };
+
+Planet create_planet(float x, float y, float vx=0, float vy=0, float r=10, float mass=100,
+		int red=200, int green=100, int blue=0){
+	Planet planet(x, y);
+	planet.setColor(red, green, blue);
+	planet.setRadius(r);
+	planet.vx = vx;
+	planet.vy = vy;
+	planet.mass = mass;
+
+	return planet;
+}
 
 
 
@@ -215,17 +228,9 @@ int main(){
     window.setFramerateLimit(60);
 
     // create planets
-    Planet planet1(0., 0.);
-    planet1.setColor(100, 100, 255);
-    planet1.setRadius(30.);
-    planet1.mass = 1000;
-    Planet planet2(300., 0.);
-    planet2.setColor(0, 255, 0);
-    planet2.vy = 50;
-    Planet planet3(-100, -200);
-    planet3.setColor(240, 0, 50);
-    planet3.vx = -20;
-    planet3.vy = 40;
+    Planet planet1 = create_planet(0., 0., 0., 0., 30., 1000.);
+    Planet planet2 = create_planet(300., 0., 0., 30., 10., 100., 0, 255, 0);
+    Planet planet3 = create_planet(-100, -200, -20, 40, 10, 100, 240, 0, 50);
 
     vector<Planet> planets = {planet1, planet2, planet3};
 
