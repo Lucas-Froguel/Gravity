@@ -8,6 +8,8 @@ using namespace std;
 
 class Planet{
 public:
+
+	// dynamical variables
 	float x = 0, y = 0;
 	float x_old = x, y_old = y;
 	float draw_x = 0, draw_y = 0;
@@ -17,8 +19,6 @@ public:
 	float Fx = 0, Fy = 0;
 	float mass = 100;
 
-	bool is_on_screen = true;
-
 	Planet(float xx, float yy){
 		x = xx;
 		y = yy;
@@ -26,15 +26,26 @@ public:
 		y_old = y;
 	}
 
+	// shape object definition
 	sf::CircleShape shape = sf::CircleShape(r, 300);
 	sf::Color color;
+	bool is_on_screen = true;
+
+	// trajectory drawing parameters
+	unsigned int trajectory_length = 1000;
+	sf::VertexArray line = sf::VertexArray(sf::LineStrip, 1000);
+	bool is_first_point = true;
+	bool is_second_point = true;
+
 
 	void drawPlanet(sf::RenderWindow& window){
 		if (is_on_screen){
+			if (is_first_point){
+				line.clear();
+				is_first_point = false;
+			}
 			window.draw(shape);
-		}
-		else{
-			setAnyPosition(0., 0.);
+			window.draw(line);
 		}
 	}
 
@@ -91,6 +102,8 @@ public:
 	void calculatePosition(float dt = 1/60.){
 		x_old = x;
 		y_old = y;
+
+		// this is called Verlet's integration of the equations of motion
 		x = x + vx * dt + ax * (dt*dt);
 		y = y + vy * dt + ay * (dt*dt);
 		cout << "force: " << Fx << " and " << Fy << endl;
@@ -101,9 +114,24 @@ public:
 	void checkOnScreen(int center_x, int center_y){
 		if (center_x < x || x < -center_x || center_y < y || y < -center_y ){
 			is_on_screen = false;
-			mass = 0;
-			setRadius(0.);
-			setAnyPosition(0., 0.);
+
+			// we also gotta stop its motion
+			x_old = x;
+			y_old = y;
+		}
+	}
+
+	void clearLine(){
+
+		if (is_on_screen && line.getVertexCount() > trajectory_length){
+			line.resize(trajectory_length);
+		}
+	}
+
+	void addPointToLine(){
+		if (is_on_screen){
+			cout << "Line draw_x " << draw_x << " and " << draw_y << endl;
+			line.append(sf::Vertex(sf::Vector2f(draw_x, draw_y), color));
 		}
 	}
 };
@@ -155,6 +183,8 @@ public:
 			planet.calculatePosition(dt);
 			planet.setPosition(center_x, center_y);
 			planet.checkOnScreen(center_x, center_y);
+			planet.addPointToLine();
+			planet.clearLine();
 			planet.drawPlanet(window);
 		}
 	}
@@ -163,9 +193,11 @@ public:
 		for (int i = 0; i < n_planets; i++){
 			Planet& planet = planets[i];
 			float Fx = 0, Fy = 0;
+			// only calculate the forces if the planet is on screen
 			if (planet.is_on_screen){
 				for (int j = 0; j < n_planets; j++){
 					if (i != j){
+						// the planet only exerts forces if it is on screen (otherwise it is "deleted")
 						Planet& p = planets[j];
 						if (p.is_on_screen){
 							float dx = planet.x - p.x;
@@ -175,13 +207,15 @@ public:
 							Fy += - G * ((planet.mass * p.mass) / pow(r, 3)) * dy;
 							// we put this here in order to be more efficient :D
 							// this checks wheter planets "planet" and "p" have collided or not
+							// if yes, it updates their position accordingly
 							checkCollisionPlanets(planet, p, r);
 						}
 					}
 				}
-				Fxs[i] = Fx;
-				Fys[i] = Fy;
 			}
+			// these are outside the if, because if the planet is not on screen, the force on it is zero
+			Fxs[i] = Fx;
+			Fys[i] = Fy;
 		}
 	}
 
@@ -193,6 +227,7 @@ public:
 			float dx = (p1.x - p2.x) / r;
 			float dy = (p1.y - p2.y) / r;
 
+			// the last term is here in order to better conserve linear momentum (though not perfectly)
 			p1.x += dx * (min_dis - r) * e * (2*p2.mass) / (p1.mass + p2.mass);
 			p1.y += dy * (min_dis - r) * e * (2*p2.mass) / (p1.mass + p2.mass);
 
@@ -216,7 +251,6 @@ Planet create_planet(float x, float y, float vx=0, float vy=0, float r=10, float
 }
 
 
-
 int main(){
 
 	// set option
@@ -228,6 +262,7 @@ int main(){
     window.setFramerateLimit(60);
 
     // create planets
+    // x, y, vx, vy, r, m, (rgb)
     Planet planet1 = create_planet(0., 0., 0., 0., 30., 1000.);
     Planet planet2 = create_planet(300., 0., 0., 30., 10., 100., 0, 255, 0);
     Planet planet3 = create_planet(-100, -200, -20, 40, 10, 100, 240, 0, 50);
