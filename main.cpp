@@ -33,19 +33,13 @@ public:
 
 	// trajectory drawing parameters
 	unsigned int trajectory_length = 1000;
-	sf::VertexArray line = sf::VertexArray(sf::LineStrip, 1000);
-	bool is_first_point = true;
-	bool is_second_point = true;
+	vector<sf::Vertex> line;
 
 
 	void drawPlanet(sf::RenderWindow& window){
 		if (is_on_screen){
-			if (is_first_point){
-				line.clear();
-				is_first_point = false;
-			}
 			window.draw(shape);
-			window.draw(line);
+			window.draw(line.data(), line.size(), sf::LineStrip);
 		}
 	}
 
@@ -122,16 +116,15 @@ public:
 	}
 
 	void clearLine(){
-
-		if (is_on_screen && line.getVertexCount() > trajectory_length){
-			line.resize(trajectory_length);
+		// if there are more points in the line than intended, we remove the first one
+		if (is_on_screen && line.size() > trajectory_length){
+			line.erase(line.begin());
 		}
 	}
 
 	void addPointToLine(){
 		if (is_on_screen){
-			cout << "Line draw_x " << draw_x << " and " << draw_y << endl;
-			line.append(sf::Vertex(sf::Vector2f(draw_x, draw_y), color));
+			line.insert(line.end(), sf::Vertex(sf::Vector2f(draw_x, draw_y), color));
 		}
 	}
 };
@@ -172,8 +165,6 @@ public:
 
 	void update(){
 		calculateForcesPlanets();
-		cout << "forces x: " << Fxs[0] << " and " << Fxs[1] << endl;
-		cout << "forces y: " << Fys[0] << " and " << Fys[1] << endl;
 		for (int i = 0; i < n_planets; i++){
 			Planet& planet = planets[i];
 			cout << i << " - position:" << planet.x << " and " << planet.y << endl;
