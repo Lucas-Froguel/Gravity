@@ -136,7 +136,7 @@ public:
 	// planets setup
 	int n_planets;
 	vector<Planet> planets;
-	float Fxs[3], Fys[3];
+	vector<float> Fxs, Fys;
 
 	// window setup
 	sf::RenderWindow& window;
@@ -155,6 +155,9 @@ public:
 		// planets configs
 		n_planets = n;
 		planets = planetss;
+
+		Fxs.resize(n_planets);
+		Fys.resize(n_planets);
 	}
 
 	void calculatePlanetsInitialPositions(){
@@ -177,6 +180,12 @@ public:
 			planet.addPointToLine();
 			planet.clearLine();
 			planet.drawPlanet(window);
+
+			// if the planet is not on screen, we kill it
+			if (not planet.is_on_screen){
+				planets.erase(planets.begin() + i);
+				n_planets -= 1;
+			}
 		}
 	}
 
@@ -257,11 +266,12 @@ int main(){
     Planet planet1 = create_planet(0., 0., 0., 0., 30., 1000.);
     Planet planet2 = create_planet(300., 0., 0., 30., 10., 100., 0, 255, 0);
     Planet planet3 = create_planet(-100, -200, -20, 40, 10, 100, 240, 0, 50);
+    Planet planet4 = create_planet(50, 150, 80, -20, 20, 400, 0, 100, 100);
 
-    vector<Planet> planets = {planet1, planet2, planet3};
+    vector<Planet> planets = {planet1, planet2, planet3, planet4};
 
     // setup the gravitational system
-    GravitationalSystem grav(3, window, planets);
+    GravitationalSystem grav(planets.size(), window, planets);
 
     cout << "run initial positions" << endl;
     grav.calculatePlanetsInitialPositions();
